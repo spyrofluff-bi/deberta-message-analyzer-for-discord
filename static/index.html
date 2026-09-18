@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBERTa-v3 Control Panel</title>
+  <meta name="description" content="Simple, elegant, and efficient control panel for DeBERTa-v3 message analysis.">
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+  <!-- Top System Header -->
+  <header class="header-bar">
+    <div class="brand-section">
+      <span class="brand-title">DeBERTa-v3 Control Panel</span>
+      <span class="brand-badge">PRO v2.0</span>
+    </div>
+
+    <div class="status-cluster">
+      <div class="status-chip" id="chip-ws">
+        <span class="indicator"></span>
+        <span id="txt-ws">FEED: LIVE</span>
+      </div>
+      <div class="status-chip" id="chip-gateway">
+        <span class="indicator warn"></span>
+        <span id="txt-gateway">GATEWAY: CONNECTING</span>
+      </div>
+      <div class="status-chip" id="chip-model">
+        <span class="indicator"></span>
+        <span id="txt-model">MODEL: READY</span>
+      </div>
+      <div class="status-chip" id="chip-queue">
+        <span>RAM QUEUE:</span>
+        <span id="txt-queue" style="color: var(--text-bright);">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main class="panel-grid">
+
+    <!-- Left Column: Operations & Settings -->
+    <section>
+      
+      <!-- Server Configuration Box -->
+      <div class="panel-box">
+        <div class="panel-header">
+          <span class="panel-title">Server Safety Settings</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label" for="select-guild">Active Discord Server</label>
+            <select class="field-select" id="select-guild"></select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="select-channel">Designated Log Channel</label>
+            <select class="field-select" id="select-channel">
+              <option value="">None (Logging Disabled)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <label class="field-label" for="input-threshold">Certainty Threshold</label>
+              <span class="mono" style="font-weight: 700; color: #818cf8;" id="txt-threshold-val">70%</span>
+            </div>
+            <input type="range" id="input-threshold" min="20" max="95" value="70" step="1" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="select-action">Action on Threshold Exceeded</label>
+            <select class="field-select" id="select-action">
+              <option value="log_only">Log Only (Post to designated channel)</option>
+              <option value="delete_and_log">Delete Message &amp; Log</option>
+              <option value="warn_and_log">Warn User in Channel &amp; Log</option>
+            </select>
+          </div>
+
+          <div style="margin-top: 0.85rem; display: flex; justify-content: flex-end;">
+            <button class="btn-action" id="btn-save-config">Apply Configuration</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Inference Tester Box -->
+      <div class="panel-box">
+        <div class="panel-header">
+          <span class="panel-title">Model Inference Tester</span>
+          <span class="mono" id="txt-test-latency" style="font-size: 0.68rem; color: var(--text-dim);">STANDBY</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label" for="input-test-text">Message Input</label>
+            <textarea class="field-textarea" id="input-test-text" placeholder="Enter message text to evaluate..."></textarea>
+          </div>
+
+          <div class="presets-list">
+            <button class="preset-chip" data-text="Good morning team, hope you have a productive day!">Greeting</button>
+            <button class="preset-chip" data-text="I will hack your account, leak your credentials and dox you!">Threat</button>
+            <button class="preset-chip" data-text="How do I set up the log channel with slash commands?">Question</button>
+            <button class="preset-chip" data-text="Free nitro gift reward click here immediately!">Spam</button>
+          </div>
+
+          <div style="margin-top: 0.75rem;">
+            <button class="btn-action" id="btn-run-test" style="width: 100%;">Run Inference</button>
+          </div>
+
+          <!-- Result Container -->
+          <div id="test-result-box" style="margin-top: 0.85rem; display: none;"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right Column: Real-Time Stream & Audit Logs -->
+    <section>
+      
+      <!-- Live Evaluated Messages Feed -->
+      <div class="panel-box">
+        <div class="panel-header">
+          <span class="panel-title">Real-Time Evaluated Messages</span>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" id="btn-export-csv">Export CSV</button>
+          </div>
+        </div>
+
+        <div style="padding: 0.6rem 0.85rem; background: var(--bg-panel-subtle); display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="filter-input" class="field-input" placeholder="Search by content or user..." style="max-width: 300px; padding: 4px 8px;">
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); cursor: pointer;">
+            <input type="checkbox" id="check-flagged-only" style="accent-color: var(--status-flag);">
+            <span>Flagged Only</span>
+          </label>
+        </div>
+
+        <div class="table-wrap" style="max-height: 640px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 70px;">Time</th>
+                <th style="width: 75px;">Status</th>
+                <th style="width: 70px;">Score</th>
+                <th style="width: 110px;">User</th>
+                <th style="width: 85px;">Channel</th>
+                <th>Message Content</th>
+                <th style="width: 60px;">Latency</th>
+              </tr>
+            </thead>
+            <tbody id="stream-tbody">
+              <tr id="empty-row">
+                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-dim); font-family: var(--font-mono);">
+                  Awaiting incoming Discord messages. Monitored traffic streams here in real time.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
